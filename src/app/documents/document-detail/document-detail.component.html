@@ -1,8 +1,8 @@
-<div class="panel panel-default" *ngIf="document">
+<div class="panel panel-default" xmlns="http://www.w3.org/1999/html">
   <div class="panel-heading">
     <div class="row pad-all">
-      <h4 class="title margin-left-right">{{ document.name }}</h4>
-      <div class="row pull-right margin-left-right">
+      <h4 class="title margin-left-right">{{document?.name}}</h4>
+      <div class="row btn-group pull-right margin-left-right">
         <a class="btn btn-primary">View</a>
         <a class="btn btn-info">Edit</a>
         <a class="btn btn-danger">Delete</a>
@@ -11,20 +11,14 @@
   </div>
   <div class="panel-body">
     <div class="pad-left-right">
-      <div class="row">
-        <label>Description:</label>
-        <span class="label-value">{{ document.description }}</span>
+      <div class="content-item">
+        <div><strong>Description:</strong></div>
+        <div class="label-value">{{document?.description}}</div>
       </div>
-      <div class="row">
-        <label>URL:</label>
-        <span class="label-value">{{ document.url }}</span>
+      <div class="content-item">
+        <div><strong>URL:</strong></div>
+        <div class="label-value">{{document?.url}}</div>
       </div>
     </div>
-  </div>
-</div>
-
-<div class="panel panel-default" *ngIf="!document">
-  <div class="panel-body">
-    <p>Please select a Document</p>
   </div>
 </div>

@@ -51,17 +51,21 @@ export class DocumentEditComponent implements OnInit {
     const urlValue = this.url.nativeElement.value;
 
     if (this.editMode) {
-      // Update existing document
+      // Update existing document - create new object instead of modifying existing
       if (this.document) {
-        this.document.name = nameValue;
-        this.document.description = descriptionValue;
-        this.document.url = urlValue;
-        this.documentService.updateDocument(this.document);
+        const newDocument = new Document(
+          this.document.id,  // Keep original ID
+          nameValue,
+          descriptionValue,
+          urlValue,
+          null
+        );
+        this.documentService.updateDocument(this.document, newDocument);
       }
     } else {
       // Create new document
       const newDocument = new Document(
-        Date.now().toString(), // Simple ID generation
+        '',  // ID will be set by the service
         nameValue,
         descriptionValue,
         urlValue,

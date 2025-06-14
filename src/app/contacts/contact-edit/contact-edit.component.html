@@ -78,7 +78,7 @@
 
       <div class="row">
         <div class="form-group">
-          <label for="groupList">Group Contacts:</label>
+          <label style="margin-left: 15px;" for="groupList">Group Contacts:</label>
 
           <div class="row" id="groupList"
                style="min-height: 3rem;"
@@ -93,6 +93,11 @@
               </div>
             </div>
             <span class="dragMsg" *ngIf="groupContacts.length < 1">Drag contacts in group here</span>
+          </div>
+
+          <!-- Add error message for invalid group contact -->
+          <div class="alert alert-danger" *ngIf="invalidGroupContact">
+            Contact can not be added to the group. It is already a group or is the current contact.
           </div>
         </div>
       </div>

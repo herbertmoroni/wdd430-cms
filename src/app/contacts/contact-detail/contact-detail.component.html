@@ -22,5 +22,14 @@
         <p><strong>Phone:</strong> {{ contact?.phone }}</p>
       </div>
     </div>
+
+    <div class="row" *ngIf="contact && contact.group && contact.group.length > 0">
+      <div class="col-xs-12">
+        <p><strong>Contacts in Team:</strong></p>
+        <div *ngFor="let groupContact of contact.group">
+          <cms-contact-item [contact]="groupContact"></cms-contact-item>
+        </div>
+      </div>
+    </div>
   </div>
 </div>

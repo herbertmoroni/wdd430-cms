@@ -15,6 +15,7 @@ export class ContactEditComponent implements OnInit {
   groupContacts: Contact[] = [];
   editMode: boolean = false;
   id: string = '';
+  invalidGroupContact: boolean = false;
 
   constructor(
     private contactService: ContactService,
@@ -102,8 +103,11 @@ export class ContactEditComponent implements OnInit {
     const selectedContact: Contact = $event.dragData;
     const invalidGroupContact = this.isInvalidContact(selectedContact);
     if (invalidGroupContact) {
+      this.invalidGroupContact = true;
+      setTimeout(() => this.invalidGroupContact = false, 3000);
       return;
     }
+    this.invalidGroupContact = false;
     this.groupContacts.push(selectedContact);
   }
 

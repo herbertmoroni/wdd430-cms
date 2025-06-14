@@ -1,5 +1,6 @@
-import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { Component, OnInit } from '@angular/core';
+import { ActivatedRoute, Router, Params } from '@angular/router';
+import { NgForm } from '@angular/forms';
 import { Contact } from '../contact.model';
 import { ContactService } from '../contact.service';
 
@@ -9,14 +10,11 @@ import { ContactService } from '../contact.service';
   styleUrls: ['./contact-edit.component.css']
 })
 export class ContactEditComponent implements OnInit {
-  @ViewChild('name') name: ElementRef;
-  @ViewChild('email') email: ElementRef;
-  @ViewChild('phone') phone: ElementRef;
-  @ViewChild('imageUrl') imageUrl: ElementRef;
-
+  originalContact: Contact | null = null;
   contact: Contact | null = null;
-  editMode = false;
-  id: string;
+  groupContacts: Contact[] = [];
+  editMode: boolean = false;
+  id: string = '';
 
   constructor(
     private contactService: ContactService,
@@ -26,63 +24,93 @@ export class ContactEditComponent implements OnInit {
 
   ngOnInit(): void {
     this.route.params.subscribe(
-      (params) => {
+      (params: Params) => {
         this.id = params['id'];
-        this.editMode = params['id'] != null;
-        if (this.editMode) {
-          this.contact = this.contactService.getContact(this.id);
-          if (this.contact) {
-            // Pre-populate form fields
-            setTimeout(() => {
-              if (this.contact) {
-                this.name.nativeElement.value = this.contact.name;
-                this.email.nativeElement.value = this.contact.email;
-                this.phone.nativeElement.value = this.contact.phone;
-                this.imageUrl.nativeElement.value = this.contact.imageUrl;
-              }
-            });
-          }
+        if (this.id === undefined || this.id === null) {
+          this.editMode = false;
+          return;
+        }
+        this.originalContact = this.contactService.getContact(this.id);
+        if (this.originalContact === undefined || this.originalContact === null) {
+          return;
+        }
+        this.editMode = true;
+        this.contact = JSON.parse(JSON.stringify(this.originalContact));
+
+        if (this.contact && this.contact.group) {
+          this.groupContacts = JSON.parse(JSON.stringify(this.contact.group));
         }
       }
     );
   }
 
-  onSave() {
-    const nameValue = this.name.nativeElement.value;
-    const emailValue = this.email.nativeElement.value;
-    const phoneValue = this.phone.nativeElement.value;
-    const imageUrlValue = this.imageUrl.nativeElement.value;
+  onSubmit(form: NgForm) {
+    const value = form.value;
+
+    console.log('Form submitted', { value, editMode: this.editMode });
 
     if (this.editMode) {
-      // Update existing contact - create new object instead of modifying existing
-      if (this.contact) {
+      if (this.originalContact) {
         const newContact = new Contact(
-          this.contact.id,  // Keep original ID
-          nameValue,
-          emailValue,
-          phoneValue,
-          imageUrlValue,
-          null
+          this.originalContact.id,
+          value.name,
+          value.email,
+          value.phone,
+          value.imageUrl,
+          this.groupContacts.length > 0 ? this.groupContacts : null
         );
-        this.contactService.updateContact(this.contact, newContact);
+        this.contactService.updateContact(this.originalContact, newContact);
+        console.log('Contact updated');
       }
     } else {
-      // Create new contact
       const newContact = new Contact(
-        '',  // ID will be set by the service
-        nameValue,
-        emailValue,
-        phoneValue,
-        imageUrlValue,
-        null
+        '',
+        value.name,
+        value.email,
+        value.phone,
+        value.imageUrl,
+        this.groupContacts.length > 0 ? this.groupContacts : null
       );
       this.contactService.addContact(newContact);
+      console.log('Contact added');
     }
 
     this.onCancel();
   }
 
   onCancel() {
-    this.router.navigate(['../'], { relativeTo: this.route });
+    console.log('Cancel clicked');
+    this.router.navigate(['/contacts']);
+  }
+
+  isInvalidContact(newContact: Contact): boolean {
+    if (!newContact) {
+      return true;
+    }
+    if (this.contact && newContact.id === this.contact.id) {
+      return true;
+    }
+    for (let i = 0; i < this.groupContacts.length; i++) {
+      if (newContact.id === this.groupContacts[i].id) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  addToGroup($event: any) {
+    const selectedContact: Contact = $event.dragData;
+    const invalidGroupContact = this.isInvalidContact(selectedContact);
+    if (invalidGroupContact) {
+      return;
+    }
+    this.groupContacts.push(selectedContact);
+  }
+
+  onRemoveItem(index: number) {
+    if (index < 0 || index >= this.groupContacts.length) {
+      return;
+    }
+    this.groupContacts.splice(index, 1);
   }
 }

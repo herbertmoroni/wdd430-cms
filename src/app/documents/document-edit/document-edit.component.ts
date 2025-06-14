@@ -1,5 +1,6 @@
-import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { Component, OnInit } from '@angular/core';
+import { ActivatedRoute, Router, Params } from '@angular/router';
+import { NgForm } from '@angular/forms';
 import { Document } from '../document.model';
 import { DocumentService } from '../document.service';
 
@@ -9,13 +10,10 @@ import { DocumentService } from '../document.service';
   styleUrls: ['./document-edit.component.css']
 })
 export class DocumentEditComponent implements OnInit {
-  @ViewChild('name') name: ElementRef;
-  @ViewChild('description') description: ElementRef;
-  @ViewChild('url') url: ElementRef;
-
+  originalDocument: Document | null = null;
   document: Document | null = null;
-  editMode = false;
-  id: string;
+  editMode: boolean = false;
+  id: string = '';
 
   constructor(
     private documentService: DocumentService,
@@ -25,59 +23,56 @@ export class DocumentEditComponent implements OnInit {
 
   ngOnInit(): void {
     this.route.params.subscribe(
-      (params) => {
+      (params: Params) => {
         this.id = params['id'];
-        this.editMode = params['id'] != null;
-        if (this.editMode) {
-          this.document = this.documentService.getDocument(this.id);
-          if (this.document) {
-            // Pre-populate form fields
-            setTimeout(() => {
-              if (this.document) {
-                this.name.nativeElement.value = this.document.name;
-                this.description.nativeElement.value = this.document.description;
-                this.url.nativeElement.value = this.document.url;
-              }
-            });
-          }
+        if (this.id === undefined || this.id === null) {
+          this.editMode = false;
+          return;
         }
+        this.originalDocument = this.documentService.getDocument(this.id);
+        if (this.originalDocument === undefined || this.originalDocument === null) {
+          return;
+        }
+        this.editMode = true;
+        this.document = JSON.parse(JSON.stringify(this.originalDocument));
       }
     );
   }
 
-  onSave() {
-    const nameValue = this.name.nativeElement.value;
-    const descriptionValue = this.description.nativeElement.value;
-    const urlValue = this.url.nativeElement.value;
+  onSubmit(form: NgForm) {
+    const value = form.value;
+
+    console.log('Form submitted', { value, editMode: this.editMode });
 
     if (this.editMode) {
-      // Update existing document - create new object instead of modifying existing
-      if (this.document) {
+      if (this.originalDocument) {
         const newDocument = new Document(
-          this.document.id,  // Keep original ID
-          nameValue,
-          descriptionValue,
-          urlValue,
+          this.originalDocument.id,
+          value.name,
+          value.description,
+          value.url,
           null
         );
-        this.documentService.updateDocument(this.document, newDocument);
+        this.documentService.updateDocument(this.originalDocument, newDocument);
+        console.log('Document updated');
       }
     } else {
-      // Create new document
       const newDocument = new Document(
-        '',  // ID will be set by the service
-        nameValue,
-        descriptionValue,
-        urlValue,
+        '',
+        value.name,
+        value.description,
+        value.url,
         null
       );
       this.documentService.addDocument(newDocument);
+      console.log('Document added');
     }
 
     this.onCancel();
   }
 
   onCancel() {
-    this.router.navigate(['../'], { relativeTo: this.route });
+    console.log('Cancel clicked');
+    this.router.navigate(['/documents']);
   }
 }

@@ -23,7 +23,7 @@ export class MessageEditComponent implements OnInit {
     const msgTextValue = this.msgText.nativeElement.value;
 
     const newMessage = new Message(
-      '99', // Hardcoded
+      '', // Will be set by service
       subjectValue,
       msgTextValue,
       this.currentSender

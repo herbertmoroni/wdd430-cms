@@ -5,6 +5,7 @@ var http = require('http');
 var bodyParser = require('body-parser');
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
+var mongoose = require('mongoose');
 
 // import the routing file to handle the default (index) route
 var index = require('./server/routes/app');
@@ -41,6 +42,15 @@ app.use((req, res, next) => {
 // root directory for your web site
 app.use(express.static(path.join(__dirname, 'cms/wdd430')));
 
+// establish a connection to the mongo database
+mongoose.connect('mongodb://localhost:27017/cms')
+  .then(() => {
+    console.log('Connected to database!');
+  })
+  .catch((err) => {
+    console.log('Connection failed: ' + err);
+  });
+
 // Tell express to map the default route ('/') to the index route
 app.use('/', index);
 app.use('/api/documents', documents);
@@ -61,5 +71,10 @@ const server = http.createServer(app);
 
 // Tell the server to start listening on the provided port
 server.listen(port, function() {
-  console.log('API running on localhost: ' + port)
+  console.log('API running on localhost: ' + port);
+  console.log('Server URLs:');
+  console.log('  Main App: http://localhost:' + port);
+  console.log('  Documents API: http://localhost:' + port + '/api/documents');
+  console.log('  Messages API: http://localhost:' + port + '/api/messages');
+  console.log('  Contacts API: http://localhost:' + port + '/api/contacts');
 });

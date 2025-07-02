@@ -28,17 +28,17 @@ SequenceGenerator.prototype.nextId = function(collectionType) {
     case 'documents':
       maxDocumentId++;
       updateObject = {maxDocumentId: maxDocumentId};
-      nextId = maxDocumentId;
+      nextId = maxDocumentId.toString();
       break;
     case 'messages':
       maxMessageId++;
       updateObject = {maxMessageId: maxMessageId};
-      nextId = maxMessageId;
+      nextId = maxMessageId.toString();
       break;
     case 'contacts':
       maxContactId++;
       updateObject = {maxContactId: maxContactId};
-      nextId = maxContactId;
+      nextId = maxContactId.toString();
       break;
     default:
       return -1;

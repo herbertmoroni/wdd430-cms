@@ -1,7 +1,5 @@
 import { Component, OnInit, Input } from '@angular/core';
 import { Message } from '../message.model';
-import { Contact } from '../../contacts/contact.model';
-import { ContactService } from '../../contacts/contact.service';
 
 @Component({
   selector: 'cms-message-item',
@@ -12,14 +10,10 @@ export class MessageItemComponent implements OnInit {
   @Input() message: Message;
   messageSender: string;
 
-  constructor(private contactService: ContactService) { }
+  constructor() { } // Remove ContactService - we don't need it anymore
 
   ngOnInit(): void {
-    const contact: Contact | null = this.contactService.getContact(this.message.sender);
-    if (contact) {
-      this.messageSender = contact.name;
-    } else {
-      this.messageSender = this.message.sender;
-    }
+    // Use the senderName that comes from the backend
+    this.messageSender = this.message.senderName || `User ${this.message.sender}`;
   }
 }

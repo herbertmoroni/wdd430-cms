@@ -36,7 +36,7 @@ router.post('/', (req, res, next) => {
     .then(createdMessage => {
       res.status(201).json({
         message: 'Message added successfully',
-        message: createdMessage
+        messageData: createdMessage  // Changed from 'message' to 'messageData'
       });
     })
     .catch(error => {

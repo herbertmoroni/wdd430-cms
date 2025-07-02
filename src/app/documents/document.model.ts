@@ -1,4 +1,6 @@
 export class Document {
+  public _id?: string; // MongoDB ObjectId
+
   constructor(
     public id: string,
     public name: string,

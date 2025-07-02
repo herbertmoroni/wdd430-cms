@@ -10,39 +10,15 @@ export class ContactService {
   contacts: Contact[] = [];
   contactSelectedEvent = new Subject<Contact>();
   contactListChangedEvent = new Subject<Contact[]>();
-  maxContactId: number;
 
-  private baseUrl = 'https://wdd-400-default-rtdb.firebaseio.com/contacts.json';
-
-  constructor(private http: HttpClient) {
-    this.maxContactId = this.getMaxId();
-  }
-
-  getMaxId(): number {
-    let maxId = 0;
-
-    for (const contact of this.contacts) {
-      const currentId = parseInt(contact.id);
-      if (currentId > maxId) {
-        maxId = currentId;
-      }
-    }
-
-    return maxId;
-  }
+  constructor(private http: HttpClient) {}
 
   getContacts(): Contact[] {
-    this.http.get<Contact[]>(this.baseUrl)
+    this.http.get<{ message: string, contacts: Contact[] }>('http://localhost:3000/api/contacts')
       .subscribe(
-        (contacts: Contact[]) => {
-          this.contacts = contacts;
-          this.maxContactId = this.getMaxId();
-          this.contacts.sort((a, b) => {
-            if (a.name < b.name) return -1;
-            if (a.name > b.name) return 1;
-            return 0;
-          });
-          this.contactListChangedEvent.next(this.contacts.slice());
+        (responseData) => {
+          this.contacts = responseData.contacts;
+          this.sortAndSend();
         },
         (error: any) => {
           console.log(error);
@@ -66,10 +42,22 @@ export class ContactService {
       return;
     }
 
-    this.maxContactId++;
-    contact.id = this.maxContactId.toString();
-    this.contacts.push(contact);
-    this.storeContacts();
+    // make sure id of the new Contact is empty
+    contact.id = '';
+
+    const headers = new HttpHeaders({'Content-Type': 'application/json'});
+
+    // add to database
+    this.http.post<{ message: string, contact: Contact }>('http://localhost:3000/api/contacts',
+      contact,
+      { headers: headers })
+      .subscribe(
+        (responseData) => {
+          // add new contact to contacts
+          this.contacts.push(responseData.contact);
+          this.sortAndSend();
+        }
+      );
   }
 
   updateContact(originalContact: Contact, newContact: Contact) {
@@ -77,14 +65,26 @@ export class ContactService {
       return;
     }
 
-    const pos = this.contacts.indexOf(originalContact);
+    const pos = this.contacts.findIndex(c => c.id === originalContact.id);
+
     if (pos < 0) {
       return;
     }
 
+    // set the id of the new Contact to the id of the old Contact
     newContact.id = originalContact.id;
-    this.contacts[pos] = newContact;
-    this.storeContacts();
+
+    const headers = new HttpHeaders({'Content-Type': 'application/json'});
+
+    // update database
+    this.http.put('http://localhost:3000/api/contacts/' + originalContact.id,
+      newContact, { headers: headers })
+      .subscribe(
+        (response: any) => {
+          this.contacts[pos] = newContact;
+          this.sortAndSend();
+        }
+      );
   }
 
   deleteContact(contact: Contact) {
@@ -92,24 +92,28 @@ export class ContactService {
       return;
     }
 
-    const pos = this.contacts.indexOf(contact);
+    const pos = this.contacts.findIndex(c => c.id === contact.id);
+
     if (pos < 0) {
       return;
     }
 
-    this.contacts.splice(pos, 1);
-    this.storeContacts();
-  }
-
-  storeContacts() {
-    const contactsString = JSON.stringify(this.contacts);
-    const headers = new HttpHeaders({'Content-Type': 'application/json'});
-
-    this.http.put(this.baseUrl, contactsString, { headers: headers })
+    // delete from database
+    this.http.delete('http://localhost:3000/api/contacts/' + contact.id)
       .subscribe(
-        () => {
-          this.contactListChangedEvent.next(this.contacts.slice());
+        (response: any) => {
+          this.contacts.splice(pos, 1);
+          this.sortAndSend();
         }
       );
+  }
+
+  private sortAndSend() {
+    this.contacts.sort((a, b) => {
+      if (a.name < b.name) return -1;
+      if (a.name > b.name) return 1;
+      return 0;
+    });
+    this.contactListChangedEvent.next(this.contacts.slice());
   }
 }
